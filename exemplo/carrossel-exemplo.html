@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carrossel Modelo — Estúdio Nômade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root {
+    --brand-primary: #7C5CFC;
+    --brand-light: #A98BFF;
+    --brand-dark: #4B32B3;
+    --light-bg: #F6F4FB;
+    --light-border: #E7E2F5;
+    --dark-bg: #14121C;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #EDEDF2;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    padding: 40px 16px 80px;
+  }
+  .sans { font-family: 'Plus Jakarta Sans', sans-serif; }
+  .serif { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+  h1.page-title {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 28px;
+  }
+
+  .carrossel-wrap {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    max-width: 460px;
+    margin: 0 auto;
+    padding-bottom: 12px;
+  }
+  .carrossel-wrap::-webkit-scrollbar { height: 6px; }
+  .carrossel-wrap::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+
+  .slide {
+    position: relative;
+    flex: 0 0 100%;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    scroll-snap-align: start;
+    overflow: hidden;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .slide-light { background: var(--light-bg); color: var(--dark-bg); }
+  .slide-dark { background: var(--dark-bg); color: #fff; }
+  .slide-gradient {
+    background: linear-gradient(165deg, var(--brand-dark) 0%, var(--brand-primary) 50%, var(--brand-light) 100%);
+    color: #fff;
+  }
+
+  .slide-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0 36px;
+  }
+  .content-center { justify-content: center; }
+  .content-bottom { justify-content: flex-end; padding-bottom: 52px; }
+  .content-top { justify-content: flex-start; padding-top: 44px; }
+
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .title {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    line-height: 1.12;
+    margin-bottom: 14px;
+  }
+
+  .body-text {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.55;
+    color: inherit;
+    opacity: 0.85;
+  }
+
+  .logo-row { display: flex; align-items: center; gap: 10px; }
+  .logo-circle {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--brand-primary);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px;
+  }
+  .logo-name { font-size: 13px; font-weight: 600; letter-spacing: 0.5px; }
+
+  .progress-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 16px 28px 20px;
+    z-index: 10;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .progress-track { flex: 1; height: 3px; border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 2px; }
+  .progress-label { font-size: 11px; font-weight: 500; }
+
+  .swipe-arrow {
+    position: absolute; right: 0; top: 0; bottom: 0; width: 48px;
+    z-index: 9;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .pill { font-size: 11px; padding: 5px 12px; border-radius: 20px; }
+  .pill-strike {
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #837E90;
+    text-decoration: line-through;
+  }
+  .pill-tag { background: rgba(255,255,255,0.08); color: var(--brand-light); }
+
+  .quote-box {
+    padding: 16px;
+    background: rgba(0,0,0,0.15);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .quote-label { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 6px; }
+  .quote-text { font-size: 15px; color: #fff; font-style: italic; line-height: 1.4; }
+
+  .feature-row {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--light-border);
+  }
+  .feature-row:last-child { border-bottom: none; }
+  .feature-icon { color: var(--brand-primary); font-size: 16px; width: 20px; text-align: center; }
+  .feature-title { font-size: 14px; font-weight: 600; color: var(--dark-bg); display: block; }
+  .feature-desc { font-size: 12px; color: #8A8580; display: block; }
+
+  .feature-row-dark { border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .feature-title-dark { color: #fff; }
+  .feature-desc-dark { color: #A39DB0; }
+
+  .step-row {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--light-border);
+  }
+  .step-row:last-child { border-bottom: none; }
+  .step-num { font-size: 26px; font-weight: 300; color: var(--brand-primary); min-width: 34px; line-height: 1; }
+
+  .cta-button {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 28px;
+    background: var(--light-bg);
+    color: var(--brand-dark);
+    font-weight: 600; font-size: 14px;
+    border-radius: 28px;
+  }
+
+  /* ---- Painel de exportacao ---- */
+  #painel-exportacao {
+    max-width: 420px;
+    margin: 32px auto 0;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 16px;
+  }
+  #painel-exportacao p.titulo { font-size: 13px; font-weight: 600; color: #111; margin-bottom: 12px; }
+  #grade-exportacao { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+  #grade-exportacao button {
+    width: 100%; padding: 8px 4px;
+    background: #f4f4f4; border: 1px solid #e0e0e0; border-radius: 8px;
+    font-size: 11px; cursor: pointer; font-family: inherit;
+  }
+  #btn-baixar-todos {
+    width: 100%; padding: 12px;
+    background: #111; color: #fff; border: none; border-radius: 10px;
+    font-weight: 600; font-size: 13px; cursor: pointer; font-family: inherit;
+  }
+  #status-exportacao { font-size: 11px; color: #888; margin-top: 8px; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">Carrossel modelo — arraste para ver os 7 slides</h1>
+
+<div class="carrossel-wrap">
+
+  <!-- Slide 1 — Hero -->
+  <div class="slide slide-light" id="slide-1">
+    <div class="slide-content content-center">
+      <div class="logo-row" style="margin-bottom:28px;">
+        <div class="logo-circle">N</div>
+        <span class="logo-name">@estudionomade</span>
+      </div>
+      <span class="tag" style="color:var(--brand-primary);">CRIAÇÃO DE CONTEÚDO</span>
+      <h1 class="title">5 hábitos de quem posta todo dia sem surtar</h1>
+      <p class="body-text">nada de sorte, nada de motivação. só sistema.</p>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-track" style="background:rgba(0,0,0,0.08);">
+        <div class="progress-fill" style="width:14.28%;background:var(--brand-primary);"></div>
+      </div>
+      <span class="progress-label" style="color:rgba(0,0,0,0.3);">1/7</span>
+    </div>
+    <div class="swipe-arrow" style="background:linear-gradient(to right,transparent,rgba(0,0,0,0.06));">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="rgba(0,0,0,0.25)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+  </div>
+
+  <!-- Slide 2 — Problema -->
+  <div class="slide slide-dark" id="slide-2">
+    <div class="slide-content content-bottom">
+      <span class="tag" style="color:var(--brand-light);">O PROBLEMA</span>
+      <h1 class="title">postar todo dia queima. improvisar em cima da hora queima mais ainda</h1>
+      <p class="body-text" style="margin-bottom:16px;">o que geralmente tenta resolver isso:</p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <span class="pill pill-strike">força de vontade</span>
+        <span class="pill pill-strike">photoshop do zero</span>
+        <span class="pill pill-strike">legenda na hora</span>
+      </div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-track" style="background:rgba(255,255,255,0.12);">
+        <div class="progress-fill" style="width:28.56%;background:#fff;"></div>
+      </div>
+      <span class="progress-label" style="color:rgba(255,255,255,0.4);">2/7</span>
+    </div>
+    <div class="swipe-arrow" style="background:linear-gradient(to right,transparent,rgba(255,255,255,0.08));">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="rgba(255,255,255,0.35)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+  </div>
+
+  <!-- Slide 3 — Solucao -->
+  <div class="slide slide-gradient" id="slide-3">
+    <div class="slide-content content-center">
+      <span class="tag" style="color:rgba(255,255,255,0.6);">A SOLUÇÃO</span>
+      <h1 class="title">sistema vence motivação todas as vezes</h1>
+      <p class="body-text" style="margin-bottom:18px;">quando o próximo passo já está decidido, você só executa.</p>
+      <div class="quote-box">
+        <p class="quote-label">regra que aplicamos aqui</p>
+        <p class="quote-text">"nunca decida o que postar no dia em que vai postar"</p>
+      </div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-track" style="background:rgba(255,255,255,0.12);">
+        <div class="progress-fill" style="width:42.84%;background:#fff;"></div>
+      </div>
+      <span class="progress-label" style="color:rgba(255,255,255,0.4);">3/7</span>
+    </div>
+    <div class="swipe-arrow" style="background:linear-gradient(to right,transparent,rgba(255,255,255,0.08));">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="rgba(255,255,255,0.35)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+  </div>
+
+  <!-- Slide 4 — Recursos -->
+  <div class="slide slide-light" id="slide-4">
+    <div class="slide-content content-top">
+      <span class="tag" style="color:var(--brand-primary);">OS 4 HÁBITOS</span>
+      <h1 class="title" style="font-size:24px; margin-bottom:20px;">o que muda na prática</h1>
+      <div class="feature-row">
+        <span class="feature-icon">01</span>
+        <div><span class="feature-title">banco de temas</span><span class="feature-desc">nunca decide o assunto no dia</span></div>
+      </div>
+      <div class="feature-row">
+        <span class="feature-icon">02</span>
+        <div><span class="feature-title">grade de horários fixa</span><span class="feature-desc">o corpo aprende o ritmo</span></div>
+      </div>
+      <div class="feature-row">
+        <span class="feature-icon">03</span>
+        <div><span class="feature-title">template pronto</span><span class="feature-desc">design não é decisão diária</span></div>
+      </div>
+      <div class="feature-row">
+        <span class="feature-icon">04</span>
+        <div><span class="feature-title">revisão semanal</span><span class="feature-desc">ajusta o plano, não o hábito</span></div>
+      </div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-track" style="background:rgba(0,0,0,0.08);">
+        <div class="progress-fill" style="width:57.12%;background:var(--brand-primary);"></div>
+      </div>
+      <span class="progress-label" style="color:rgba(0,0,0,0.3);">4/7</span>
+    </div>
+    <div class="swipe-arrow" style="background:linear-gradient(to right,transparent,rgba(0,0,0,0.06));">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="rgba(0,0,0,0.25)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+  </div>
+
+  <!-- Slide 5 — Detalhes -->
+  <div class="slide slide-dark" id="slide-5">
+    <div class="slide-content content-top">
+      <span class="tag" style="color:var(--brand-light);">DETALHE QUE NINGUÉM CONTA</span>
+      <h1 class="title" style="font-size:24px; margin-bottom:20px;">o banco de temas resolve 80% do bloqueio</h1>
+      <div class="feature-row feature-row-dark">
+        <span class="feature-icon">•</span>
+        <div><span class="feature-title feature-title-dark">30 temas prontos</span><span class="feature-desc feature-desc-dark">separados por pilar de conteúdo</span></div>
+      </div>
+      <div class="feature-row feature-row-dark">
+        <span class="feature-icon">•</span>
+        <div><span class="feature-title feature-title-dark">reaproveitável</span><span class="feature-desc feature-desc-dark">um tema vira 3 formatos diferentes</span></div>
+      </div>
+      <div class="feature-row feature-row-dark" style="border-bottom:none;">
+        <span class="feature-icon">•</span>
+        <div><span class="feature-title feature-title-dark">atualiza 1x por mês</span><span class="feature-desc feature-desc-dark">não 1x por dia</span></div>
+      </div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-track" style="background:rgba(255,255,255,0.12);">
+        <div class="progress-fill" style="width:71.4%;background:#fff;"></div>
+      </div>
+      <span class="progress-label" style="color:rgba(255,255,255,0.4);">5/7</span>
+    </div>
+    <div class="swipe-arrow" style="background:linear-gradient(to right,transparent,rgba(255,255,255,0.08));">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="rgba(255,255,255,0.35)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+  </div>
+
+  <!-- Slide 6 — Como funciona -->
+  <div class="slide slide-light" id="slide-6">
+    <div class="slide-content content-top">
+      <span class="tag" style="color:var(--brand-primary);">COMO FUNCIONA</span>
+      <h1 class="title" style="font-size:24px; margin-bottom:20px;">o fluxo de 3 passos</h1>
+      <div class="step-row">
+        <span class="step-num">01</span>
+        <div><span class="feature-title">domingo: escolhe 5 temas</span><span class="feature-desc">do banco, pra semana toda</span></div>
+      </div>
+      <div class="step-row">
+        <span class="step-num">02</span>
+        <div><span class="feature-title">segunda: grava tudo de uma vez</span><span class="feature-desc">um bloco só, sem trocar de contexto</span></div>
+      </div>
+      <div class="step-row" style="border-bottom:none;">
+        <span class="step-num">03</span>
+        <div><span class="feature-title">o resto da semana: só publica</span><span class="feature-desc">no horário fixo, no piloto automático</span></div>
+      </div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-track" style="background:rgba(0,0,0,0.08);">
+        <div class="progress-fill" style="width:85.68%;background:var(--brand-primary);"></div>
+      </div>
+      <span class="progress-label" style="color:rgba(0,0,0,0.3);">6/7</span>
+    </div>
+    <div class="swipe-arrow" style="background:linear-gradient(to right,transparent,rgba(0,0,0,0.06));">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="rgba(0,0,0,0.25)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+  </div>
+
+  <!-- Slide 7 — CTA (sem seta, barra cheia) -->
+  <div class="slide slide-gradient" id="slide-7">
+    <div class="slide-content content-center">
+      <div class="logo-row" style="margin-bottom:24px;">
+        <div class="logo-circle" style="background:#fff;color:var(--brand-primary);">N</div>
+        <span class="logo-name">@estudionomade</span>
+      </div>
+      <h1 class="title">salve esse carrossel antes de esquecer</h1>
+      <p class="body-text" style="margin-bottom:24px;">amanhã você não vai lembrar dos 3 passos. hoje sim.</p>
+      <div class="cta-button">salvar pra aplicar essa semana →</div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-track" style="background:rgba(255,255,255,0.12);">
+        <div class="progress-fill" style="width:100%;background:#fff;"></div>
+      </div>
+      <span class="progress-label" style="color:rgba(255,255,255,0.4);">7/7</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- Painel de exportacao -->
+<div id="painel-exportacao">
+  <p class="titulo">Exportar carrossel (PNG)</p>
+  <div id="grade-exportacao"></div>
+  <button id="btn-baixar-todos">Baixar todos os slides (.zip)</button>
+  <p id="status-exportacao"></p>
+</div>
+
+<script>
+(function () {
+  const LARGURA_EXPORT = 1080;
+  const NOME_BASE = 'carrossel-estudionomade-habitos';
+  const slides = Array.from(document.querySelectorAll('.slide'));
+
+  async function capturarSlide(el) {
+    const scale = LARGURA_EXPORT / el.offsetWidth;
+    const canvas = await html2canvas(el, {
+      scale,
+      backgroundColor: null,
+      useCORS: true,
+      logging: false,
+    });
+    return canvas;
+  }
+
+  function baixarCanvas(canvas, nomeArquivo) {
+    const link = document.createElement('a');
+    link.download = nomeArquivo;
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  function montarPainel() {
+    const grade = document.getElementById('grade-exportacao');
+    slides.forEach((slide, i) => {
+      const num = String(i + 1).padStart(2, '0');
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px;';
+      const btn = document.createElement('button');
+      btn.textContent = `Slide ${num}`;
+      btn.onclick = async () => {
+        btn.textContent = '...';
+        const canvas = await capturarSlide(slide);
+        baixarCanvas(canvas, `${NOME_BASE}-slide-${num}.png`);
+        btn.textContent = `Slide ${num}`;
+      };
+      wrapper.appendChild(btn);
+      grade.appendChild(wrapper);
+    });
+  }
+
+  async function baixarTodosZip() {
+    const status = document.getElementById('status-exportacao');
+    const btn = document.getElementById('btn-baixar-todos');
+    btn.disabled = true;
+    const zip = new JSZip();
+    for (let i = 0; i < slides.length; i++) {
+      status.textContent = `Gerando slide ${i + 1} de ${slides.length}...`;
+      const canvas = await capturarSlide(slides[i]);
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      const num = String(i + 1).padStart(2, '0');
+      zip.file(`${NOME_BASE}-slide-${num}.png`, blob);
+    }
+    status.textContent = 'Compactando...';
+    const conteudo = await zip.generateAsync({ type: 'blob' });
+    const link = document.createElement('a');
+    link.download = `${NOME_BASE}.zip`;
+    link.href = URL.createObjectURL(conteudo);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    status.textContent = 'Pronto! Verifique sua pasta de downloads.';
+    btn.disabled = false;
+  }
+
+  document.getElementById('btn-baixar-todos').addEventListener('click', baixarTodosZip);
+  montarPainel();
+})();
+</script>
+
+</body>
+</html>

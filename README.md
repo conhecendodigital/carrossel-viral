@@ -84,7 +84,7 @@ A pasta [`exemplo/`](exemplo) tem um carrossel completo já gerado (`carrossel-e
 
 ## Créditos
 
-Esta skill parte da base do [Social Media Skills Pack](https://instagram.com/inzbrasil) criado por **INZ**, com a exportação real de PNG (painel de download + script Python/Playwright) adicionada e testada neste repositório.
+Criado e desenvolvido por **Matheus Soares** — [@omatheusai](https://instagram.com/omatheusai).
 
 Se essa skill te ajudou a postar mais carrosséis, **dá uma ⭐ no repositório** — é o que faz mais gente encontrar isso.
 

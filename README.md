@@ -90,4 +90,4 @@ Se essa skill te ajudou a postar mais carrosséis, **dá uma ⭐ no repositório
 
 ## Licença
 
-Livre para uso pessoal e comercial. Compartilhe à vontade, só mantenha os créditos.
+[MIT](LICENSE). Livre para uso pessoal e comercial. Compartilhe à vontade, só mantenha os créditos.
